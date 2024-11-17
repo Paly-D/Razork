@@ -1,0 +1,50 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+@using MovieCatalog.Web.Utils
+@using MovieCatalogApi.Services;
+@using MovieCatalogApi.Entities;
+@inject MovieCatalogApi.Services.IMovieCatalogDataService DataService
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            @{
+                Dictionary<Genre, int> dict = await DataService.GetGenresWithTitleCountsAsync();
+                foreach (var item in dict)
+                {
+                    @Html.Raw(string.Format("{0} ({1}) ", item.Key.Name, item.Value))
+                }
+            }
+        </div>
+        <div class="col">
+            <div class="row">
+                @{
+                    TitleFilter titleFilter = TitleFilter.Empty;
+                    titleFilter.TitleTypes = new List<TitleType> { TitleType.Movie };
+                    titleFilter.StartYearMax = 2024;
+
+                    var result = await DataService.GetTitlesAsync(20, 1, titleFilter, TitleSort.ReleaseYear, true);
+                    foreach (var item in result.Results)
+                    {
+                        <div class="card" style="width: 18rem;">
+                            <div class="card-body">
+                                <h5 class="card-title"><a href="/Title">@Html.Raw(string.Format("{0} ({1}{2}) {3} ", item.PrimaryTitle, item.StartYear, (item.EndYear.HasValue ? "-" + item.EndYear :""), item.OriginalTitle.Equals(item.PrimaryTitle) ? "" : "(" + item.OriginalTitle + ")"))</a></h5>
+                                <p class="card-text">
+                                    @{
+                                        foreach (var x in item.TitleGenres)
+                                        {
+                                            @Html.Raw(string.Format("{0} ", x.Genre.Name))
+                                        }
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
